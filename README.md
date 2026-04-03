@@ -4,6 +4,8 @@
 
 HearthNet is a protocol and reference implementation for coordinating multiple AI agents managing smart home devices. It uses Git as an append-only audit log and MQTT for real-time agent communication, ensuring every actuation is authorized, conflict-free, and recoverable.
 
+Orchestration decisions (intent decomposition, conflict arbitration, and lease evaluation) are driven by LLM calls (Claude Sonnet 4.5 or GPT 5.2), with a mock mode for reproducible runs without API keys.
+
 📄 **Paper:** _HearthNet: Persistent Multi-Agent Orchestration for Smart Home on Commodity Edge Hardware_ (CAIS 2026)  
 🎬 **Demo Video:** https://www.youtube.com/watch?v=p3ZKDsKifRk 
 🌐 **Interactive Demo:** https://hearthnet.vercel.app/
@@ -44,10 +46,10 @@ HearthNet is a protocol and reference implementation for coordinating multiple A
 ## Demo Scenes
 
 ### Scene 1: Intent-Driven Coordination
-User says "I'm working from home." Rupert decomposes into 4 subtasks (lights, speakers, focus timer, DND), issues leases, agents execute in parallel, all committed to Git.
+User says "I'm working from home." Rupert uses the LLM to decompose the intent into subtasks, issues leases, agents execute in parallel, all committed to Git.
 
 ### Scene 2: Conflict Resolution
-A scheduled "evening wind-down" routine fires while WFH mode is active. Jeeves and Darcy both request conflicting state changes. Dewey detects the conflicts, Rupert queries the Git timeline, determines user-explicit intent takes priority over scheduled routines, and denies both leases.
+A scheduled "evening wind-down" routine fires while WFH mode is active. Jeeves and Darcy both request conflicting state changes. Dewey detects the conflicts, Rupert queries the Git timeline, calls the LLM APIs to arbitrate user-explicit intent takes priority over scheduled routines, and denies both leases.
 
 ### Scene 3: Freshness & Authorization Verification
 Jeeves crashes and restarts with stale state. It attempts to replay a pre-crash command with an expired lease bound to an old commit. Dewey blocks it with a double safety gate (stale base_commit + expired lease). Even after re-syncing, Rupert denies the request on policy grounds — freshness alone is insufficient; policy coherence is required.
@@ -72,6 +74,8 @@ export HEARTHNET_ROOT_SECRET=your-secret-here
 export MQTT_HOST=127.0.0.1
 export MQTT_USER=your-mqtt-username
 export MQTT_PASS=your-mqtt-password
+export HEARTHNET_LLM_PROVIDER=anthropic    # or "openai"
+export ANTHROPIC_API_KEY=your-key-here
 ```
 
 ### Run the Demo
@@ -118,12 +122,14 @@ Runs Scene 2 and Scene 3 five times each, reports completion rates, detection ra
 ```
 hearthnet/
 ├── protocol/
-│   ├── msg.js                  # MQTT message construction + agent client factory
-│   ├── lease.js                # Lease creation, validation, HMAC signing
-│   └── message-schema.json     # Message envelope schema
-├── librarian/
-│   └── dewey-librarian.js      # Git-backed librarian: commit events, validate leases,
-│                                #   detect conflicts, enforce freshness
+│   ├── msg.js
+│   ├── lease.js
+│   ├── llm.js              # LLM integration (Anthropic/OpenAI + mock mode)
+│   ├── llm-prompts.js      # System prompts for decomposition, arbitration, lease eval
+│   └── message-schema.json
+├── traces/                  # Recorded LLM call traces for audit/reproducibility
+│   └── README.md
+├── .env.example             # Environment variable template
 ├── demo/
 │   ├── demo-common.js          # Shared helpers for demo scripts
 │   ├── scene1-coordinated-actuation.js
@@ -176,12 +182,4 @@ MIT
 
 ## Citation
 
-```bibtex
-@inproceedings{hearthnet2026,
-  title={HearthNet: Persistent Multi-Agent Orchestration for Smart Home on Commodity Edge Hardware},
-  author={Zhonghao Zhan and Krinos Li and Yefan Zhang and Hamed Haddadi},
-  booktitle={Proceedings of CAIS 2026},
-  year={2026},
-  organization={Imperial College London}
-}
-```
+Coming soon — paper under review at ACM CAIS 2026.
