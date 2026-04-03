@@ -169,7 +169,7 @@ hearthnet/
 
 The prototype runs on commodity hardware:
 - **Mac mini M4** — Root agent (Rupert), MQTT broker
-- **Intel NUC N150** — Home Assistant, Librarian (Dewey), Jeeves
+- **Intel NUC 11** — Home Assistant, Librarian (Dewey), Jeeves
 - **Android phone** — Mobile agent (Darcy) via ADB
 - **Philips Hue** — Smart lights
 - **Network** — Tailscale mesh (WireGuard)
